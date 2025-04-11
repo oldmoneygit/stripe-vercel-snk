@@ -71,11 +71,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ url: session.url });
   } catch (err) {
-    console.error('🔥 ERRO DETALHADO DO STRIPE:');
-console.error('📛 MESSAGE:', err.message);
-console.error('🧠 STACK:', err.stack);
-console.error('📦 RAW:', JSON.stringify(err, null, 2));
-
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error('❌ Stripe Error:', err.message, err.stack, JSON.stringify(err));
+    res.status(500).json({ error: err.message || 'Internal Server Error' });
   }
 }
