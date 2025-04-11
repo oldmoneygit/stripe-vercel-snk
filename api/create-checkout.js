@@ -48,7 +48,7 @@ export default async function handler(req, res) {
         },
       ],
       mode: 'payment',
-      customer_email: email,
+      customer_creation: 'always',
       success_url: 'https://qxxk00-am.myshopify.com/pages/obrigado',
       cancel_url: 'https://qxxk00-am.myshopify.com/pages/erro',
     });
