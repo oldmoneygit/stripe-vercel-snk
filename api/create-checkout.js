@@ -5,7 +5,20 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 export default async function handler(req, res) {
-  // ======= CORS HEADERS =======
+  // ======= Handle Preflight (OPTIONS) first! =======
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Origin', 'https://qxxk00-am.myshopify.com');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization'
+    );
+    res.status(200).end();
+    return;
+  }
+
+  // ======= Apply CORS headers for all other requests =======
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', 'https://qxxk00-am.myshopify.com');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -14,13 +27,7 @@ export default async function handler(req, res) {
     'X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization'
   );
 
-  // ======= Handle Preflight (OPTIONS) =======
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
-  // ======= Validate method =======
+  // ======= Block non-POST methods =======
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
@@ -41,7 +48,7 @@ export default async function handler(req, res) {
             product_data: {
               name: product,
             },
-            unit_amount: 1999, // €19.99
+            unit_amount: 1999,
           },
           quantity: quantity,
         },
