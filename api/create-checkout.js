@@ -5,19 +5,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 export default async function handler(req, res) {
-  // ======= CORS =======
-  if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', 'https://qxxk00-am.myshopify.com');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader(
-      'Access-Control-Allow-Headers',
-      'X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization'
-    );
-    res.status(200).end();
-    return;
-  }
-
+  // ======= CORS HEADERS =======
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', 'https://qxxk00-am.myshopify.com');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -26,6 +14,13 @@ export default async function handler(req, res) {
     'X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization'
   );
 
+  // ======= Handle Preflight (OPTIONS) =======
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  // ======= Validate method =======
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
