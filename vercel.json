@@ -2,14 +2,22 @@
     "version": 2,
     "functions": {
       "api/stripe.js": {
-        "runtime": "vercel/node@22.x"
+        "runtime": "nodejs18.x"
       }
     },
+    "engines": {
+      "node": "18.x"
+    },
+    "builds": [
+      {
+        "src": "api/stripe.js",
+        "use": "@vercel/node"
+      }
+    ],
     "routes": [
       {
-        "src": "/(.*)",
-        "dest": "/api/index.js"
+        "src": "/api/stripe",
+        "dest": "/api/stripe.js"
       }
     ]
   }
-  
