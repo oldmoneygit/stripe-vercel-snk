@@ -1,10 +1,5 @@
 {
     "version": 2,
-    "functions": {
-      "api/stripe.js": {
-        "runtime": "nodejs18.x"
-      }
-    },
     "builds": [
       {
         "src": "api/stripe.js",
