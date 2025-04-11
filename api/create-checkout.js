@@ -4,21 +4,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2022-11-15',
 });
 
-export default async function handler(req, res) {
-  // ======= Handle Preflight (OPTIONS) first! =======
-  if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', 'https://qxxk00-am.myshopify.com');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader(
-      'Access-Control-Allow-Headers',
-      'X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization'
-    );
-    res.status(200).end();
-    return;
-  }
-
-  // ======= Apply CORS headers for all other requests =======
+function setCorsHeaders(res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', 'https://qxxk00-am.myshopify.com');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -26,27 +12,25 @@ export default async function handler(req, res) {
     'Access-Control-Allow-Headers',
     'X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization'
   );
+}
 
-  // ======= Block non-POST methods =======
+export default async function handler(req, res) {
+  setCorsHeaders(res);
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
   try {
-    console.log('📩 REQ BODY:', req.body);
-    console.log('📩 REQ HEADERS:', req.headers);
-    console.log('📩 REQ METHOD:', req.method);
-    console.log('📩 REQ URL:', req.url);
-    console.log('📩 REQ COOKIES:', req.cookies);
-    console.log('📩 REQ QUERY:', req.query);
-    console.log('📩 REQ PROTOCOL:', req.protocol);
-    console.log('📩 REQ HOST:', req.headers.host);
-    console.log('📩 REQ IP:', req.ip);
-
     const { product, quantity, email } = req.body;
 
-    if (!product || !quantity) {
-      return res.status(400).json({ error: 'Missing product or quantity' });
+    if (!product || typeof quantity !== 'number' || quantity < 1 || !email) {
+      return res.status(400).json({ error: 'Missing or invalid product, quantity, or email' });
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -58,9 +42,9 @@ export default async function handler(req, res) {
             product_data: {
               name: product,
             },
-            unit_amount: 1999,
+            unit_amount: 1999, // €19.99
           },
-          quantity: quantity,
+          quantity,
         },
       ],
       mode: 'payment',
@@ -71,7 +55,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ url: session.url });
   } catch (err) {
-    console.error('❌ Stripe Error:', err.message, err.stack, JSON.stringify(err));
+    console.error('❌ Stripe Error:', err);
     res.status(500).json({ error: err.message || 'Internal Server Error' });
   }
 }
