@@ -27,10 +27,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { product, quantity, email } = req.body;
+    const { product, quantity, email, price } = req.body;
 
-    if (!product || typeof quantity !== 'number' || quantity < 1 || !email) {
-      return res.status(400).json({ error: 'Missing or invalid product, quantity, or email' });
+    if (!product || typeof quantity !== 'number' || quantity < 1 || !email || typeof price !== 'number') {
+      return res.status(400).json({ error: 'Missing or invalid product, quantity, price, or email' });
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -42,7 +42,7 @@ export default async function handler(req, res) {
             product_data: {
               name: product,
             },
-            unit_amount: 1999, // €19.99
+            unit_amount: price, // AGORA USA O VALOR REAL DO CARRINHO EM CENTAVOS
           },
           quantity,
         },
