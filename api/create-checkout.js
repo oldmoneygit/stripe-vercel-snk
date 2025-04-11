@@ -33,6 +33,16 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log('📩 REQ BODY:', req.body);
+    console.log('📩 REQ HEADERS:', req.headers);
+    console.log('📩 REQ METHOD:', req.method);
+    console.log('📩 REQ URL:', req.url);
+    console.log('📩 REQ COOKIES:', req.cookies);
+    console.log('📩 REQ QUERY:', req.query);
+    console.log('📩 REQ PROTOCOL:', req.protocol);
+    console.log('📩 REQ HOST:', req.headers.host);
+    console.log('📩 REQ IP:', req.ip);
+
     const { product, quantity, email } = req.body;
 
     if (!product || !quantity) {
@@ -61,7 +71,11 @@ export default async function handler(req, res) {
 
     res.status(200).json({ url: session.url });
   } catch (err) {
-    console.error('❌ Stripe Error:', err);
+    console.error('🔥 ERRO DETALHADO DO STRIPE:');
+console.error('📛 MESSAGE:', err.message);
+console.error('🧠 STACK:', err.stack);
+console.error('📦 RAW:', JSON.stringify(err, null, 2));
+
     res.status(500).json({ error: 'Internal Server Error' });
   }
 }
