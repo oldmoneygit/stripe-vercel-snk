@@ -1,15 +1,31 @@
 {
-    "version": 2,
-    "builds": [
-      {
-        "src": "api/stripe.js",
-        "use": "@vercel/node"
-      }
-    ],
-    "routes": [
-      {
-        "src": "/api/stripe",
-        "dest": "/api/stripe.js"
-      }
-    ]
-  }
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/create-checkout.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/stripe.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/ping.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/create-checkout",
+      "dest": "/api/create-checkout.js"
+    },
+    {
+      "src": "/api/stripe",
+      "dest": "/api/stripe.js"
+    },
+    {
+      "src": "/api/ping",
+      "dest": "/api/ping.js"
+    }
+  ]
+}
