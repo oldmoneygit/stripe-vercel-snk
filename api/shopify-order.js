@@ -6,7 +6,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, line_items, amount } = req.body;
+    const { email, line_items, amount, shipping_address } = req.body;
+
 
     const SHOPIFY_STORE = 'https://qxxk00-am.myshopify.com';
     const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
@@ -14,6 +15,7 @@ export default async function handler(req, res) {
     const orderData = {
       order: {
         email,
+        shipping_address: shipping_address,
         financial_status: 'paid',
         send_receipt: true,
         send_fulfillment_receipt: true,

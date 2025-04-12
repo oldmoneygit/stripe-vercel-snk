@@ -46,6 +46,19 @@ export default async function handler(req, res) {
         quantity: Number(item.quantity),
       }));
 
+      const shipping = session.shipping_details;
+      const shipping_address = {
+        first_name: shipping.name.split(' ')[0],
+        last_name: shipping.name.split(' ').slice(1).join(' ') || '',
+        address1: shipping.address.line1,
+        address2: shipping.address.line2 || '',
+        city: shipping.address.city,
+        province: shipping.address.state,
+        country: shipping.address.country,
+        zip: shipping.address.postal_code
+      };
+      
+
       // Soma total da fatura (convertendo de centavos pra decimal)
       const amount = items.reduce((acc, item) => {
         return acc + (item.price * item.quantity);
@@ -55,8 +68,11 @@ export default async function handler(req, res) {
       const payload = {
         email,
         line_items,
-        amount
+        amount,
+        shipping_address
+        
       };
+      
 
       // Bate no endpoint que cria ordem
       try {
