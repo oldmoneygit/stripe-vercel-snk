@@ -90,7 +90,8 @@
   
     async function fetchLogs() {
       try {
-        const res = await fetch('/api/log-pedido', {
+        const res = await fetch('https://stripe-serverless-vercel.onrender.com/api/log-pedido', {
+            method: 'GET',
           headers: {
             'Accept': 'application/json'
           }
@@ -133,6 +134,7 @@
     fetchLogs();
     setInterval(fetchLogs, 5000); // Atualiza a cada 5s
   </script>
+  
   
 </body>
 </html>
