@@ -74,9 +74,7 @@ export default async function handler(req, res) {
 
       // Dados que o webhook vai usar pra criar a ordem na Shopify
       metadata: {
-        variantId,
-        quantity: quantity.toString(),
-        amount: (price * quantity / 100).toFixed(2),
+        items: JSON.stringify(items),
       },
     });
 
