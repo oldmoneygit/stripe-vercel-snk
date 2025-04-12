@@ -1,0 +1,5 @@
+# Nunca comita esses putos
+.env*
+*.local
+*.secret
+*.key
