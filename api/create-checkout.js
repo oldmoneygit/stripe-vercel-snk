@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import getRawBody from 'raw-body'; // ✅ Garante funcionamento fora do Next puro
+import getRawBody from 'raw-body';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2022-11-15',
@@ -9,7 +9,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 function setCorsHeaders(res) {
   try {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', 'https://602j2f-ig.myshopify.com');
+    res.setHeader('Access-Control-Allow-Origin', '*'); // Permitir qualquer origem (ajuste conforme necessário)
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
     res.setHeader(
       'Access-Control-Allow-Headers',
@@ -65,16 +65,15 @@ export default async function handler(req, res) {
         price_data: {
           currency: 'eur',
           product_data: {
-            name: 'SNEAKER SNK HOUSE', // nome blindado
+            name: 'SNEAKER SNK HOUSE', // Nome do produto
           },
-          unit_amount: item.price,
+          unit_amount: Math.round(item.price * 100), // Certifique-se de que o valor está em centavos
         },
         quantity: item.quantity,
       })),
       mode: 'payment',
-      customer_creation: 'always',
-      success_url: 'https://602j2f-ig.myshopify.com/pages/obrigado',
-      cancel_url: 'https://602j2f-ig.myshopify.com/pages/erro',
+      success_url: `${process.env.SUCCESS_URL || 'https://602j2f-ig.myshopify.com/pages/obrigado'}`,
+      cancel_url: `${process.env.CANCEL_URL || 'https://602j2f-ig.myshopify.com/pages/erro'}`,
       billing_address_collection: 'auto',
       shipping_address_collection: {
         allowed_countries: ['ES'],
@@ -92,7 +91,7 @@ export default async function handler(req, res) {
     res.status(200).json({ url: session.url });
 
   } catch (err) {
-    console.error('💥 [FATAL] Stripe explodeu:', err.message || err);
+    console.error('💥 [FATAL] Stripe explodiu:', err.message || err);
     res.status(500).json({ error: err.message || 'Erro interno no servidor' });
   }
 }
