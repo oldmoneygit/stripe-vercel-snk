@@ -48,9 +48,9 @@ export default async function handler(req, res) {
             product_data: {
               name: 'SNEAKER SNK HOUSE', // 👟 Camuflagem total, nome fixo genérico
             },
-            unit_amount: price,
+            unit_amount: item.price,
           },
-          quantity,
+          quantity: item.quantity,
         },
       ],
       mode: 'payment',
