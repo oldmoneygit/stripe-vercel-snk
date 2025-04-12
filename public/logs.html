@@ -2,35 +2,160 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Logs de Pedidos</title>
+  <title>🧠 Painel de Logs - SNK HOUSE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
-      font-family: monospace;
-      background: #111;
-      color: #0f0;
-      padding: 20px;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
+      font-family: 'Orbitron', sans-serif;
+      color: #00ffcc;
     }
+
+    header {
+      text-align: center;
+      padding: 2rem;
+      border-bottom: 2px solid #00ffcc;
+      animation: fadeIn 1s ease-out;
+    }
+
     h1 {
-      color: #fff;
+      margin: 0;
+      font-size: 2.5rem;
+      letter-spacing: 2px;
     }
-    pre {
-      background: #222;
-      padding: 20px;
-      border-radius: 8px;
-      overflow-x: auto;
+
+    .container {
+      padding: 2rem;
+      animation: slideUp 1s ease-out;
+    }
+
+    .logs {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      max-height: 400px;
+      overflow-y: auto;
+      background: #121212;
+      border-radius: 10px;
+      padding: 1rem;
+      border: 1px solid #00ffcc33;
+    }
+
+    .log {
+      background: #1c1c1c;
+      border-left: 5px solid #00ffcc;
+      padding: 0.75rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    canvas {
+      max-width: 100%;
+      margin-top: 2rem;
+      background: #111;
+      padding: 1rem;
+      border-radius: 10px;
+    }
+
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: translateY(-10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideUp {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    footer {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.75rem;
+      color: #888;
     }
   </style>
 </head>
+
 <body>
-  <h1>🧾 Logs de Pedidos</h1>
-  <p>Atualiza a cada 5 segundos</p>
-  <pre id="logOutput">Carregando...</pre>
+  <header>
+    <h1>Sistema de Logs - SNK HOUSE</h1>
+    <p style="color: #fff;">Monitoramento em tempo real dos pedidos 🔥</p>
+  </header>
+
+  <div class="container">
+    <div class="logs" id="logContainer">
+      <div class="log">⏳ Carregando logs...</div>
+    </div>
+
+    <canvas id="chartCanvas" height="120"></canvas>
+  </div>
+
+  <footer>
+    &copy; SNK HOUSE - Painel criado por Lek do Black
+  </footer>
 
   <script>
+    const logContainer = document.getElementById('logContainer');
+    const ctx = document.getElementById('chartCanvas').getContext('2d');
+
+    let chart;
+    const chartData = {
+      labels: [],
+      datasets: [{
+        label: 'Valor em €',
+        data: [],
+        backgroundColor: '#00ffcc55',
+        borderColor: '#00ffcc',
+        borderWidth: 2
+      }]
+    };
+
     async function fetchLogs() {
       const res = await fetch('/api/log-pedido');
       const data = await res.json();
-      document.getElementById('logOutput').innerText = JSON.stringify(data, null, 2);
+
+      // Preencher logs no HTML
+      logContainer.innerHTML = '';
+      data.slice().reverse().forEach(log => {
+        const div = document.createElement('div');
+        div.className = 'log';
+        div.textContent = `[${log.date || '???'}] ${log.email || 'sem e-mail'} - ${log.amount || 0}€ - ${log?.address?.city || '??'}`;
+        logContainer.appendChild(div);
+      });
+
+      // Atualiza gráfico
+      const last5 = data.slice(-10);
+      chartData.labels = last5.map((l, i) => l.email?.split('@')[0] || `#${i}`);
+      chartData.datasets[0].data = last5.map(l => l.amount || 0);
+
+      if (!chart) {
+        chart = new Chart(ctx, {
+          type: 'bar',
+          data: chartData,
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+              title: { display: true, text: 'Pedidos Recentes (em €)', color: '#fff' }
+            },
+            scales: {
+              x: { ticks: { color: '#00ffcc' } },
+              y: { ticks: { color: '#00ffcc' } }
+            }
+          }
+        });
+      } else {
+        chart.update();
+      }
     }
 
     fetchLogs();
