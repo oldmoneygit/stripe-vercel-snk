@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Trocar Domínio Shopify</title>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 40px;
+      text-align: center;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      margin: 10px;
+      border-radius: 5px;
+      border: none;
+    }
+    button {
+      background: #00ffae;
+      color: #000;
+      cursor: pointer;
+    }
+    .log {
+      margin-top: 20px;
+      text-align: left;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧠 Substituidor de Domínios Shopify</h1>
+
+  <input id="oldDomain" placeholder="Domínio antigo (ex: qxxk00-am.myshopify.com)" size="40" />
+  <br/>
+  <input id="newDomain" placeholder="Domínio novo (ex: 602j2f-ig.myshopify.com)" size="40" />
+  <br/>
+  <button onclick="replaceDomains()">🔁 SUBSTITUIR DOMÍNIOS</button>
+
+  <div class="log" id="logArea"></div>
+
+  <script>
+    async function replaceDomains() {
+      const oldDomain = document.getElementById('oldDomain').value.trim();
+      const newDomain = document.getElementById('newDomain').value.trim();
+      const log = document.getElementById('logArea');
+
+      log.innerHTML = '⌛ Processando substituições...';
+
+      const res = await fetch('/api/replace-domain', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ oldDomain, newDomain })
+      });
+
+      const data = await res.json();
+
+      if (data.files) {
+        log.innerHTML = `
+          ✅ Substituição concluída!<br>
+          Foram alterados <strong>${data.total}</strong> arquivos:<br><br>
+          <pre>${data.files.join('\n')}</pre>
+        `;
+      } else {
+        log.innerHTML = '❌ Erro ao substituir. Verifica os valores.';
+      }
+    }
+  </script>
+</body>
+</html>

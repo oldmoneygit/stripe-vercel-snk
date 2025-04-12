@@ -12,29 +12,41 @@ const shopifyOrderGraphQL = require('./api/shopify-order-graphql');
 const shopifyOrderPaid = require('./api/shopify-order-paid');
 const logPedido = require('./api/log-pedido');
 const cloneLoja = require('./api/clone-loja');
-const updateDomain = require('./api/update-domain');
+const updateDomain = require('./api/replace-domain');
 
-// FUNÇÃO PRA NORMALIZAR EXPORT DEFAULT
-const normalize = (handler) => (typeof handler === 'function' ? handler : handler.default || handler.handler);
+// NORMALIZA EXPORTS
+const normalize = (handler) =>
+  typeof handler === 'function' ? handler : handler.default || handler.handler;
 
-// SERVE STATIC FILES DA /public
+// SERVE STATIC FILES
 const publicPath = path.join(__dirname, 'public');
 const serve = serveStatic(publicPath);
 
-// ROTEAMENTO PRINCIPAL
+// CRIA SERVIDOR
 const server = http.createServer((req, res) => {
-  // primeiro tenta servir arquivos estáticos
   serve(req, res, () => {
     router(
+      // WEBHOOK E SHOPIFY
       post('/api/stripe-webhook', normalize(stripeWebhook)),
       post('/api/shopify-order', normalize(shopifyOrder)),
       post('/api/shopify-order-graphql', normalize(shopifyOrderGraphQL)),
       post('/api/shopify-order-paid', normalize(shopifyOrderPaid)),
+
+      // LOGS
       post('/api/log-pedido', normalize(logPedido)),
       get('/api/log-pedido', normalize(logPedido)),
+
+      // CLONE E SUBSTITUIÇÃO DE DOMÍNIO
       post('/api/clone-loja', normalize(cloneLoja)),
-      post('/api/log-pedido', normalize(logPedido)),
       post('/api/update-domain', normalize(updateDomain)),
+
+      // PING RAIZ
+      get('/', (req, res) => res.end('🔥 Lek do Black Online')),
+
+      // ROTAS MANUAIS PRA HTML ESTÁTICO
+      get('/replace.html', (req, res) => serve(req, res, finalhandler(req, res))),
+      get('/clone.html', (req, res) => serve(req, res, finalhandler(req, res))),
+      get('/logs.html', (req, res) => serve(req, res, finalhandler(req, res)))
     )(req, res, finalhandler(req, res));
   });
 });
