@@ -1,9 +1,15 @@
 const axios = require('axios');
 
 module.exports = async function cloneLoja(baseDomain, baseToken, destDomain, destToken) {
-  console.log('Parâmetros recebidos:', { baseDomain, baseToken, destDomain, destToken });
-
   try {
+    // Normalizar e validar os parâmetros
+    baseDomain = (baseDomain || '').trim();
+    baseToken = (baseToken || '').trim();
+    destDomain = (destDomain || '').trim();
+    destToken = (destToken || '').trim();
+
+    console.log('Parâmetros normalizados:', { baseDomain, baseToken, destDomain, destToken });
+
     // Validação dos domínios
     if (!baseDomain || !destDomain) {
       throw new Error('Os domínios baseDomain e destDomain são obrigatórios.');
@@ -12,7 +18,13 @@ module.exports = async function cloneLoja(baseDomain, baseToken, destDomain, des
       throw new Error('Os domínios devem estar no formato "example.myshopify.com".');
     }
 
+    // Validação dos tokens
+    if (!baseToken || !destToken) {
+      throw new Error('Os tokens baseToken e destToken são obrigatórios.');
+    }
+
     // Obter os produtos da loja de origem
+    console.log(`Obtendo produtos da loja de origem: ${baseDomain}`);
     const baseResponse = await axios.get(`https://${baseDomain}/admin/api/2023-10/products.json`, {
       headers: {
         'X-Shopify-Access-Token': baseToken,
@@ -20,7 +32,13 @@ module.exports = async function cloneLoja(baseDomain, baseToken, destDomain, des
       },
     });
 
-    const products = baseResponse.data.products;
+    const products = baseResponse.data.products || [];
+    console.log(`Produtos encontrados: ${products.length}`);
+
+    if (products.length === 0) {
+      console.log('Nenhum produto encontrado na loja de origem.');
+      return;
+    }
 
     for (const product of products) {
       // Preparar o payload para a loja de destino
@@ -46,18 +64,23 @@ module.exports = async function cloneLoja(baseDomain, baseToken, destDomain, des
       };
 
       // Enviar o produto para a loja de destino
-      const destResponse = await axios.post(
-        `https://${destDomain}/admin/api/2023-10/products.json`,
-        productData,
-        {
-          headers: {
-            'X-Shopify-Access-Token': destToken,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      console.log(`Clonando produto: ${product.title}`);
+      try {
+        const destResponse = await axios.post(
+          `https://${destDomain}/admin/api/2023-10/products.json`,
+          productData,
+          {
+            headers: {
+              'X-Shopify-Access-Token': destToken,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
-      console.log(`Produto "${product.title}" clonado com sucesso!`, destResponse.data);
+        console.log(`Produto "${product.title}" clonado com sucesso!`, destResponse.data);
+      } catch (error) {
+        console.error(`Erro ao clonar o produto "${product.title}":`, error.response?.data?.errors || error.message);
+      }
     }
   } catch (error) {
     console.error('💥 ERRO NO CLONE:', error.response?.data?.errors || error.message);
