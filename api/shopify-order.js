@@ -6,15 +6,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, variantId, quantity, amount } = req.body;
+    const { email, line_items, amount } = req.body;
 
-    // 🚨 Variáveis de ambiente seguras
     const SHOPIFY_STORE = 'https://qxxk00-am.myshopify.com';
     const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
-
-    if (!SHOPIFY_ACCESS_TOKEN) {
-      throw new Error('SHOPIFY_ACCESS_TOKEN não foi definido, porra!');
-    }
 
     const orderData = {
       order: {
@@ -22,12 +17,7 @@ export default async function handler(req, res) {
         financial_status: 'paid',
         send_receipt: true,
         send_fulfillment_receipt: true,
-        line_items: [
-          {
-            variant_id: variantId,
-            quantity
-          }
-        ],
+        line_items,
         transactions: [
           {
             kind: 'sale',
@@ -49,14 +39,10 @@ export default async function handler(req, res) {
       }
     );
 
-    console.log('🚀 Ordem criada com sucesso:', response.data);
-    return res.status(200).json({ message: 'Ordem criada com sucesso, caralho!', data: response.data });
+    return res.status(200).json({ message: 'Ordem criada com sucesso!', data: response.data });
 
   } catch (error) {
-    console.error('❌ Deu merda criando ordem:', error.response?.data || error.message);
-    return res.status(500).json({
-      message: 'Deu merda criando ordem.',
-      error: error.response?.data || error.message
-    });
+    console.error('❌ Erro ao criar ordem:', error.response?.data || error.message);
+    return res.status(500).json({ error: 'Erro ao criar ordem', details: error.response?.data || error.message });
   }
 }
