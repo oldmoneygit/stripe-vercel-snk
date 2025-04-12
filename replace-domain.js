@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-// CONFIGURA AQUI: DOMÍNIO ANTIGO E NOVO // RODA ESSE PROMPT NA RAIZ DO PROJETO NO TERMINAL  : node replace-domain.js
+// CONFIGURA AQUI: DOMÍNIO ANTIGO E NOVO
 const OLD_DOMAIN = '602j2f-ig.myshopify.com';
 const NEW_DOMAIN = '602j2f-ig.myshopify.com';
 
@@ -35,4 +35,5 @@ function scanAndReplace(dir, oldText, newText) {
 
 console.log(`🚀 Substituindo "${OLD_DOMAIN}" por "${NEW_DOMAIN}" em arquivos...`);
 scanAndReplace(__dirname, OLD_DOMAIN, NEW_DOMAIN);
-console.log('🎯 Substituição finalizada.');
+console.log('🎯 Substituição finalizada com sucesso!');
+console.log('⚠️  LEMBRETE DO INFERNO: Vá até o Render.com e atualize os ENV com o novo domínio e os novos tokens, SENÃO ESSA PORRA VAI DAR PAU.');
