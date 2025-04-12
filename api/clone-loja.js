@@ -2,11 +2,11 @@ const axios = require('axios');
 
 module.exports = async function cloneLoja(baseDomain, baseToken, destDomain, destToken) {
   try {
-    // Normalizar e validar os parâmetros
-    baseDomain = (baseDomain || '').trim();
-    baseToken = (baseToken || '').trim();
-    destDomain = (destDomain || '').trim();
-    destToken = (destToken || '').trim();
+    // Garantir que os parâmetros sejam strings
+    baseDomain = typeof baseDomain === 'string' ? baseDomain.trim() : '';
+    baseToken = typeof baseToken === 'string' ? baseToken.trim() : '';
+    destDomain = typeof destDomain === 'string' ? destDomain.trim() : '';
+    destToken = typeof destToken === 'string' ? destToken.trim() : '';
 
     console.log('Parâmetros normalizados:', { baseDomain, baseToken, destDomain, destToken });
 
