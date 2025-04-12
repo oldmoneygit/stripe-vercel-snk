@@ -44,18 +44,18 @@
 
       // Calcular o total e formatar os valores
       const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const formattedTotalPrice = new Intl.NumberFormat('es-ES', {
+      const formattedTotalPrice = (totalPrice / 100).toLocaleString('es-ES', {
         style: 'currency',
         currency: 'EUR',
-      }).format(totalPrice / 100); // Dividir por 100 para converter de centavos para euros
+      }); // Dividir por 100 para converter de centavos para euros
 
-      const formattedUnitPrice = new Intl.NumberFormat('es-ES', {
+      const formattedUnitPrice = (items[0].price / 100).toLocaleString('es-ES', {
         style: 'currency',
         currency: 'EUR',
-      }).format(items[0].price / 100); // Dividir por 100 para converter de centavos para euros
+      }); // Dividir por 100 para converter de centavos para euros
 
       // Atualizar o texto do botão
-      checkoutBtn.textContent = `Pagar ${formattedTotalPrice} (${items[0].quantity} x ${formattedUnitPrice} unidad)`;
+      checkoutBtn.textContent = `Pagar ${formattedTotalPrice} (Cantidad ${items[0].quantity}, ${formattedUnitPrice} unidad)`;
 
       checkoutBtn.addEventListener('click', async () => {
         console.log('👊 Clique detectado. Iniciando processo...');
