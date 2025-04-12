@@ -12,6 +12,7 @@ const shopifyOrderGraphQL = require('./api/shopify-order-graphql');
 const shopifyOrderPaid = require('./api/shopify-order-paid');
 const logPedido = require('./api/log-pedido');
 const cloneLoja = require('./api/clone-loja');
+const updateDomain = require('./api/update-domain');
 
 // FUNÇÃO PRA NORMALIZAR EXPORT DEFAULT
 const normalize = (handler) => (typeof handler === 'function' ? handler : handler.default || handler.handler);
@@ -32,7 +33,8 @@ const server = http.createServer((req, res) => {
       post('/api/log-pedido', normalize(logPedido)),
       get('/api/log-pedido', normalize(logPedido)),
       post('/api/clone-loja', normalize(cloneLoja)),
-      get('/', (req, res) => res.end('Lek do Black rodando, caralho!'))
+      post('/api/log-pedido', normalize(logPedido)),
+      post('/api/update-domain', normalize(updateDomain)),
     )(req, res, finalhandler(req, res));
   });
 });

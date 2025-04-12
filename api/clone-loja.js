@@ -1,8 +1,23 @@
 const axios = require('axios');
+require('dotenv').config();
+
+// Chamada da função com os parâmetros corretos
+(async () => {
+  const BASE_TOKEN = process.env.BASE_TOKEN;
+  const DEST_TOKEN = process.env.DEST_TOKEN;
+
+  await cloneLoja(
+    process.env.BASE_DOMAIN,
+    BASE_TOKEN,
+    process.env.DEST_DOMAIN,
+    DEST_TOKEN
+  );
+})();
 
 module.exports = async function cloneLoja(baseDomain, baseToken, destDomain, destToken) {
   try {
-    // Garantir que os parâmetros sejam strings
+    console.log('Parâmetros recebidos antes da normalização:', { baseDomain, baseToken, destDomain, destToken });
+
     baseDomain = typeof baseDomain === 'string' ? baseDomain.trim() : '';
     baseToken = typeof baseToken === 'string' ? baseToken.trim() : '';
     destDomain = typeof destDomain === 'string' ? destDomain.trim() : '';
@@ -10,7 +25,6 @@ module.exports = async function cloneLoja(baseDomain, baseToken, destDomain, des
 
     console.log('Parâmetros normalizados:', { baseDomain, baseToken, destDomain, destToken });
 
-    // Validação dos domínios
     if (!baseDomain || !destDomain) {
       throw new Error('Os domínios baseDomain e destDomain são obrigatórios.');
     }
@@ -18,12 +32,10 @@ module.exports = async function cloneLoja(baseDomain, baseToken, destDomain, des
       throw new Error('Os domínios devem estar no formato "example.myshopify.com".');
     }
 
-    // Validação dos tokens
     if (!baseToken || !destToken) {
       throw new Error('Os tokens baseToken e destToken são obrigatórios.');
     }
 
-    // Obter os produtos da loja de origem
     console.log(`Obtendo produtos da loja de origem: ${baseDomain}`);
     const baseResponse = await axios.get(`https://${baseDomain}/admin/api/2023-10/products.json`, {
       headers: {
@@ -41,13 +53,12 @@ module.exports = async function cloneLoja(baseDomain, baseToken, destDomain, des
     }
 
     for (const product of products) {
-      // Preparar o payload para a loja de destino
       const productData = {
         product: {
           title: product.title,
           body_html: product.body_html,
           vendor: product.vendor,
-          product_type: product.product_type || "Default", // Adiciona um tipo de produto padrão, se estiver vazio
+          product_type: product.product_type || "Default",
           status: product.status || "active",
           variants: product.variants.map(variant => ({
             title: variant.title,
@@ -63,7 +74,6 @@ module.exports = async function cloneLoja(baseDomain, baseToken, destDomain, des
         },
       };
 
-      // Enviar o produto para a loja de destino
       console.log(`Clonando produto: ${product.title}`);
       try {
         const destResponse = await axios.post(
