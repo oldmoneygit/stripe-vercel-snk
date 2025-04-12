@@ -5,18 +5,18 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2022-11-15',
 });
 
-// Liberar requisições da Shopify e geral
+// 🔓 Desbloqueia geral (se quiser limitar, troca o "*" pelo domínio fixo da Shopify)
 function setCorsHeaders(res) {
   try {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', '*'); // Libera geral
+    res.setHeader('Access-Control-Allow-Origin', '*'); // ← ou troca pra domínio da tua loja
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
     res.setHeader(
       'Access-Control-Allow-Headers',
       'X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization'
     );
   } catch (e) {
-    console.log('💥 Erro ao setar headers CORS:', e);
+    console.log('💥 Erro ao setar headers CORS:', e.message);
   }
 }
 
@@ -25,14 +25,15 @@ module.exports = async function handler(req, res) {
   setCorsHeaders(res);
 
   if (req.method === 'OPTIONS') {
-    console.log('🔁 Preflight request OPTIONS respondido.');
+    console.log('🔁 Preflight OPTIONS aceito.');
     res.statusCode = 200;
     return res.end();
   }
 
   if (req.method !== 'POST') {
-    console.log(`🚫 Método não permitido: ${req.method}`);
+    console.warn(`🚫 Método ${req.method} não permitido!`);
     res.statusCode = 405;
+    res.setHeader('Content-Type', 'application/json');
     return res.end(JSON.stringify({ message: 'Method Not Allowed' }));
   }
 
@@ -44,7 +45,7 @@ module.exports = async function handler(req, res) {
     const { items } = parsedBody;
 
     if (!Array.isArray(items) || items.length === 0) {
-      console.log('❌ Carrinho vazio ou inválido:', items);
+      console.warn('❌ Carrinho vazio ou inválido!');
       res.statusCode = 400;
       return res.end(JSON.stringify({ error: 'Carrinho vazio ou inválido' }));
     }
@@ -55,7 +56,7 @@ module.exports = async function handler(req, res) {
         price_data: {
           currency: 'eur',
           product_data: {
-            name: item.title || 'SNEAKER SNK HOUSE',
+            name: item.title || 'SNEAKER SNK HOUSE', // Nome fake camuflado
           },
           unit_amount: item.price,
         },
@@ -74,6 +75,7 @@ module.exports = async function handler(req, res) {
       },
       locale: 'es',
       metadata: {
+        origin: 'stripe-vercel-snk.vercel.app',
         items: JSON.stringify(items),
       }
     });
