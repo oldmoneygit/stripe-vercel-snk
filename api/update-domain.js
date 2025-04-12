@@ -1,57 +1,56 @@
 const fs = require('fs');
 const path = require('path');
 
-module.exports = async (req, res) => {
+module.exports = async function updateDomain(req, res) {
   let body = '';
-  req.on('data', chunk => {
-    body += chunk.toString();
-  });
-
-  req.on('end', async () => {
+  req.on('data', chunk => { body += chunk });
+  req.on('end', () => {
     try {
       const { oldDomain, newDomain } = JSON.parse(body);
 
-      const projectDir = path.join(__dirname, '..');
-      const filesToScan = [];
+      const dir = path.join(__dirname, '..'); // raiz do projeto
+      const files = getAllFiles(dir, ['.js', '.html', '.json']);
 
-      const walkDir = (dir) => {
-        fs.readdirSync(dir).forEach(file => {
-          const fullPath = path.join(dir, file);
-          const stats = fs.statSync(fullPath);
+      let logs = [];
 
-          if (stats.isDirectory()) {
-            if (!fullPath.includes('node_modules')) {
-              walkDir(fullPath);
-            }
-          } else if (/\.(js|json|html|txt|css)$/.test(file)) {
-            filesToScan.push(fullPath);
-          }
-        });
-      };
-
-      walkDir(projectDir);
-
-      const modifiedFiles = [];
-
-      filesToScan.forEach(file => {
-        const content = fs.readFileSync(file, 'utf-8');
+      files.forEach(file => {
+        const content = fs.readFileSync(file, 'utf8');
 
         if (content.includes(oldDomain)) {
-          const updatedContent = content.replaceAll(oldDomain, newDomain);
-          fs.writeFileSync(file, updatedContent, 'utf-8');
-          modifiedFiles.push(file.replace(projectDir, ''));
+          const updated = content.replaceAll(oldDomain, newDomain);
+          fs.writeFileSync(file, updated, 'utf8');
+          logs.push({
+            file: path.relative(dir, file),
+            status: '✅ Modificado',
+          });
         }
       });
 
-      return res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({
-        message: modifiedFiles.length
-          ? `✅ Substituição concluída. ${modifiedFiles.length} arquivos modificados.`
-          : `🟡 Nenhuma ocorrência de "${oldDomain}" foi encontrada.`,
-        modifiedFiles
-      }));
+      if (logs.length === 0) {
+        logs.push({ file: '-', status: '🚫 Nenhum arquivo com domínio antigo encontrado' });
+      }
+
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ message: 'Finalizado', logs }));
     } catch (err) {
-      console.error('❌ Erro durante substituição:', err);
-      return res.writeHead(500, { 'Content-Type': 'application/json' }).end(JSON.stringify({ error: 'Erro ao processar substituição', details: err.message }));
+      console.error('💥 ERRO AO SUBSTITUIR:', err.message);
+      res.statusCode = 500;
+      res.end(JSON.stringify({ error: err.message }));
     }
   });
 };
+
+function getAllFiles(dirPath, extensions, arrayOfFiles = []) {
+  const files = fs.readdirSync(dirPath);
+
+  files.forEach(file => {
+    const fullPath = path.join(dirPath, file);
+    if (fs.statSync(fullPath).isDirectory()) {
+      getAllFiles(fullPath, extensions, arrayOfFiles);
+    } else if (extensions.includes(path.extname(file))) {
+      arrayOfFiles.push(fullPath);
+    }
+  });
+
+  return arrayOfFiles;
+}
