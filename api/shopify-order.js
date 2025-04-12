@@ -26,7 +26,7 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const SHOPIFY_STORE = 'https://qxxk00-am.myshopify.com';
+  const SHOPIFY_STORE = 'https://602j2f-ig.myshopify.com';
   const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ADMIN_TOKEN;
 
   const orderData = {

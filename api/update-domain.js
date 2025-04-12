@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const ANTIGO_DOMINIO = 'qxxk00-am.myshopify.com';
+const ANTIGO_DOMINIO = '602j2f-ig.myshopify.com';
 
 module.exports = async (req, res) => {
   let body = '';

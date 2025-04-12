@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const OLD_DOMAIN = 'qxxk00-am.myshopify.com';
+const OLD_DOMAIN = '602j2f-ig.myshopify.com';
 const NEW_DOMAIN = '602j2f-ig.myshopify.com';
 
 const extensions = ['.js', '.json', '.html']; // Arquivos que vai varrer

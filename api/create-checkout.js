@@ -6,7 +6,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 
 function setCorsHeaders(res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', 'https://qxxk00-am.myshopify.com');
+  res.setHeader('Access-Control-Allow-Origin', 'https://602j2f-ig.myshopify.com');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
@@ -47,8 +47,8 @@ export default async function handler(req, res) {
       })),
       mode: 'payment',
       customer_creation: 'always',
-      success_url: 'https://qxxk00-am.myshopify.com/pages/obrigado',
-      cancel_url: 'https://qxxk00-am.myshopify.com/pages/erro',
+      success_url: 'https://602j2f-ig.myshopify.com/pages/obrigado',
+      cancel_url: 'https://602j2f-ig.myshopify.com/pages/erro',
       billing_address_collection: 'auto',
       shipping_address_collection: {
         allowed_countries: ['ES'],

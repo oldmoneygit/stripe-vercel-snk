@@ -26,7 +26,7 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const shopifyDomain = process.env.SHOPIFY_DOMAIN; // ex: qxxk00-am.myshopify.com
+  const shopifyDomain = process.env.SHOPIFY_DOMAIN; // ex: 602j2f-ig.myshopify.com
   const shopifyToken = process.env.SHOPIFY_ADMIN_TOKEN;
 
   // Formata os line_items como GraphQL input
