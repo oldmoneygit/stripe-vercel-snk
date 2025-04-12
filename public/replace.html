@@ -44,31 +44,48 @@
   <div class="log" id="logArea"></div>
 
   <script>
-    async function replaceDomains() {
+    async function substituirDominios() {
       const oldDomain = document.getElementById('oldDomain').value.trim();
       const newDomain = document.getElementById('newDomain').value.trim();
-      const log = document.getElementById('logArea');
-
-      log.innerHTML = '⌛ Processando substituições...';
-
-      const res = await fetch('/api/replace-domain', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ oldDomain, newDomain })
-      });
-
-      const data = await res.json();
-
-      if (data.files) {
-        log.innerHTML = `
-          ✅ Substituição concluída!<br>
-          Foram alterados <strong>${data.total}</strong> arquivos:<br><br>
-          <pre>${data.files.join('\n')}</pre>
-        `;
-      } else {
-        log.innerHTML = '❌ Erro ao substituir. Verifica os valores.';
+      const status = document.getElementById('status');
+      const lista = document.getElementById('lista');
+  
+      if (!oldDomain || !newDomain) {
+        alert('Preenche os dois domínios, porra!');
+        return;
+      }
+  
+      status.innerText = '⚙️ Processando substituições...';
+      lista.innerHTML = '';
+  
+      try {
+        const res = await fetch('/api/update-domain', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ oldDomain, newDomain })
+        });
+  
+        const data = await res.json();
+  
+        if (data.modifiedFiles?.length) {
+          status.innerText = `✅ Finalizado! ${data.modifiedFiles.length} arquivos alterados.`;
+          data.modifiedFiles.forEach(file => {
+            const li = document.createElement('li');
+            li.textContent = file;
+            lista.appendChild(li);
+          });
+        } else {
+          status.innerText = `🟡 Nada encontrado com domínio "${oldDomain}".`;
+        }
+  
+      } catch (err) {
+        console.error('Erro ao substituir:', err);
+        status.innerText = '💥 Erro ao tentar substituir. Verifica os logs.';
       }
     }
   </script>
+<p id="status" style="margin-top: 20px; font-weight: bold;"></p>
+<ul id="lista" style="text-align: left; max-width: 600px;"></ul>
+  
 </body>
 </html>

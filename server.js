@@ -12,7 +12,7 @@ const shopifyOrderGraphQL = require('./api/shopify-order-graphql');
 const shopifyOrderPaid = require('./api/shopify-order-paid');
 const logPedido = require('./api/log-pedido');
 const cloneLoja = require('./api/clone-loja');
-const updateDomain = require('./api/replace-domain');
+const updateDomain = require('./api/update-domain');
 
 // NORMALIZA EXPORTS
 const normalize = (handler) =>
