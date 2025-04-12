@@ -26,11 +26,15 @@ const serve = serveStatic(publicPath);
 const server = http.createServer((req, res) => {
   serve(req, res, () => {
     router(
+      
       // WEBHOOK E SHOPIFY
       post('/api/stripe-webhook', normalize(stripeWebhook)),
       post('/api/shopify-order', normalize(shopifyOrder)),
       post('/api/shopify-order-graphql', normalize(shopifyOrderGraphQL)),
       post('/api/shopify-order-paid', normalize(shopifyOrderPaid)),
+
+      // STRIPE CHECKOUT
+      post('/api/create-checkout', normalize(require('./api/create-checkout'))), // 👈 AQUI FILHOTE
 
       // LOGS
       post('/api/log-pedido', normalize(logPedido)),
