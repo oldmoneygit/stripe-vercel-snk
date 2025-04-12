@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste Stripe Checkout</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #6772e5;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #5469d4;
+    }
+  </style>
+</head>
+<body>
+  <h1>Teste Stripe Checkout</h1>
+  <button id="pagar-com-stripe">Pagar com Stripe</button>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const checkoutBtn = document.querySelector('#pagar-com-stripe');
+
+      if (!checkoutBtn) {
+        console.warn('🚨 Botão #pagar-com-stripe não encontrado no DOM.');
+        return;
+      }
+
+      checkoutBtn.addEventListener('click', async () => {
+        console.log('👊 Clique detectado. Iniciando processo...');
+
+        try {
+          // Simular itens do carrinho para teste
+          const items = [
+            { price: 7999, quantity: 2, title: 'Nike SB Dunk Low Strange Love Skateboards' }
+          ];
+
+          console.log('🚀 Enviando itens para a API do backend Stripe:', items);
+
+          // Enviar os itens para a API do backend
+          const response = await fetch('https://checkout.snkhouse.com/api/create-checkout', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ items }),
+          });
+
+          console.log('📡 STATUS CODE:', response.status);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Erro na resposta da API:', errorText);
+            alert('Erro ao iniciar o checkout. Tente novamente mais tarde.');
+            return;
+          }
+
+          const data = await response.json();
+          console.log('📦 Resposta da API:', data);
+
+          // Redirecionar para a URL do Stripe
+          if (data && data.url) {
+            console.log('✅ Redirecionando para Stripe:', data.url);
+            window.location.href = data.url; // Redirecionar para a URL do Stripe
+          } else {
+            console.warn('⚠️ Resposta sem URL válida:', data);
+            alert('Não foi possível iniciar o checkout. Tente novamente.');
+          }
+        } catch (err) {
+          console.error('💥 Erro geral no checkout Stripe:', err.message);
+          alert('Erro inesperado ao tentar iniciar o checkout Stripe.');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
