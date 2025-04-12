@@ -60,6 +60,7 @@ export default async function handler(req, res) {
   phone_number_collection: {
     enabled: true
   },
+  locale: 'es',
     });
 
     
