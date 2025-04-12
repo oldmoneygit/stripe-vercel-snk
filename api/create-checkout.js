@@ -1,14 +1,14 @@
 const Stripe = require('stripe');
+const getRawBody = require('raw-body');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2022-11-15',
 });
 
-// 🔥 CORS LIBERADÃO
 function setCorsHeaders(res) {
   try {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', '*'); // ← ALTERA AQUI se quiser travar
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
     res.setHeader(
       'Access-Control-Allow-Headers',
@@ -25,25 +25,32 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'OPTIONS') {
     console.log('🔁 Preflight OPTIONS respondido.');
-    res.status(200).end();
+    res.statusCode = 200;
+    res.end();
     return;
   }
 
   if (req.method !== 'POST') {
     console.log(`🚫 Método proibido: ${req.method}`);
-    res.status(405).json({ message: 'Method Not Allowed' });
+    res.statusCode = 405;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ message: 'Method Not Allowed' }));
     return;
   }
 
   try {
-    const parsedBody = req.body;
+    const raw = await getRawBody(req);
+    const parsedBody = JSON.parse(raw.toString());
+
     console.log('📦 Body recebido:', parsedBody);
 
     const { items } = parsedBody;
 
     if (!Array.isArray(items) || items.length === 0) {
       console.log('❌ Carrinho vazio ou inválido:', items);
-      res.status(400).json({ error: 'Carrinho vazio ou inválido' });
+      res.statusCode = 400;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ error: 'Carrinho vazio ou inválido' }));
       return;
     }
 
@@ -53,7 +60,7 @@ module.exports = async function handler(req, res) {
         price_data: {
           currency: 'eur',
           product_data: {
-            name: 'SNEAKER SNK HOUSE', // 👟 FAKADO COM ORGULHO
+            name: 'SNEAKER SNK HOUSE',
           },
           unit_amount: item.price,
         },
@@ -77,10 +84,16 @@ module.exports = async function handler(req, res) {
     });
 
     console.log('✅ Stripe session criada:', session.url);
-    res.status(200).json({ url: session.url });
+
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ url: session.url }));
 
   } catch (err) {
     console.error('💥 Stripe Error:', err.message);
-    res.status(500).json({ error: err.message || 'Erro interno no servidor' });
+
+    res.statusCode = 500;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ error: err.message || 'Erro interno no servidor' }));
   }
 };
