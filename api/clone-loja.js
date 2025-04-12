@@ -2,6 +2,14 @@ const axios = require('axios');
 
 module.exports = async function cloneLoja(baseDomain, baseToken, destDomain, destToken) {
   try {
+    // Validação dos domínios
+    if (!baseDomain || !destDomain) {
+      throw new Error('Os domínios baseDomain e destDomain são obrigatórios.');
+    }
+    if (!/^.+\.myshopify\.com$/.test(baseDomain) || !/^.+\.myshopify\.com$/.test(destDomain)) {
+      throw new Error('Os domínios devem estar no formato "example.myshopify.com".');
+    }
+
     // Obter os produtos da loja de origem
     const baseResponse = await axios.get(`https://${baseDomain}/admin/api/2023-10/products.json`, {
       headers: {
