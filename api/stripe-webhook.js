@@ -1,5 +1,5 @@
-import { buffer } from 'micro';
-import axios from 'axios';
+const { buffer } = require('micro');
+const axios = require('axios');
 
 export const config = {
   api: {
