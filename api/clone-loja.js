@@ -1,4 +1,5 @@
 const axios = require('axios');
+const cloneLoja = require('../api/cloneLoja');
 require('dotenv').config();
 
 // Chamada da função com os parâmetros corretos
