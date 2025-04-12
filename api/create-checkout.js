@@ -52,7 +52,17 @@ export default async function handler(req, res) {
       customer_creation: 'always',
       success_url: 'https://qxxk00-am.myshopify.com/pages/obrigado',
       cancel_url: 'https://qxxk00-am.myshopify.com/pages/erro',
+      // ADICIONA ESSA BOSTA AQUI 👇👇👇👇
+      billing_address_collection: 'required',
+      shipping_address_collection: {
+      allowed_countries: ['ES'] // Põe os que tu aceita
+  },
+  phone_number_collection: {
+    enabled: true
+  },
     });
+
+    
 
     res.status(200).json({ url: session.url });
   } catch (err) {
