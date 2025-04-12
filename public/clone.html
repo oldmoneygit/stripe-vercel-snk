@@ -1,155 +1,122 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🧬 Clonador de Loja - SNK HOUSE</title>
-
+  <meta charset="UTF-8">
+  <title>Clonar Loja - SNK HOUSE</title>
   <style>
     body {
-      margin: 0;
-      padding: 0;
-      background: linear-gradient(135deg, #0f0f0f, #191919);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f0f0f;
       color: #00ffae;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
+      text-align: center;
+      padding: 50px;
     }
 
     h1 {
-      text-align: center;
-      margin-top: 40px;
-      font-size: 32px;
-      background: linear-gradient(to right, #00ffae, #0075ff);
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: glow 2s ease-in-out infinite alternate;
-    }
-
-    @keyframes glow {
-      from { text-shadow: 0 0 5px #00ffae; }
-      to { text-shadow: 0 0 15px #00ffae; }
-    }
-
-    .container {
-      margin-top: 40px;
-      background: #161616;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 0 12px #00ffae2f;
-      width: 90%;
-      max-width: 600px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: bold;
+      font-size: 28px;
+      margin-bottom: 20px;
       color: #00ffae;
     }
 
-    input {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 20px;
+    input, button {
+      margin: 10px;
+      padding: 10px;
       border: none;
-      border-radius: 5px;
-      background-color: #1e1e1e;
-      color: #fff;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+
+    input {
+      width: 300px;
     }
 
     button {
-      width: 100%;
-      padding: 15px;
       background: linear-gradient(to right, #00ffae, #0075ff);
-      border: none;
-      border-radius: 5px;
-      color: #000;
-      font-weight: bold;
+      color: black;
       cursor: pointer;
-      font-size: 16px;
-      transition: background 0.3s ease;
     }
 
-    button:hover {
-      background: linear-gradient(to right, #00ffae, #00eaff);
+    #result, #progress {
+      margin-top: 30px;
+      text-align: left;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+      background: #1a1a1a;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #00ffae2a;
+      font-size: 15px;
+      white-space: pre-line;
     }
 
-    .result {
+    .loader {
       margin-top: 20px;
-      padding: 20px;
-      background: #1e1e1e;
-      border-left: 5px solid #00ffae;
-      border-radius: 5px;
-      color: #fff;
-      font-family: monospace;
-      max-height: 300px;
-      overflow-y: auto;
+      width: 100%;
+      height: 4px;
+      background: #333;
+      overflow: hidden;
     }
 
-    footer {
-      margin-top: auto;
-      padding: 20px;
-      text-align: center;
-      font-size: 14px;
-      color: #777;
+    .bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(to right, #00ffae, #0075ff);
+      animation: load 6s infinite linear;
+    }
+
+    @keyframes load {
+      0% { width: 0%; }
+      50% { width: 100%; }
+      100% { width: 0%; }
     }
   </style>
 </head>
 <body>
-  <h1>🧬 Clonador de Loja - SNK HOUSE</h1>
+  <h1>🧬 Clonagem de Loja Shopify</h1>
 
-  <div class="container">
-    <label for="dominio">🔗 Domínio da nova loja:</label>
-    <input type="text" id="dominio" placeholder="https://exemplo.myshopify.com" />
+  <input type="text" id="dominio" placeholder="Novo domínio (ex: loja123.myshopify.com)" />
+  <br />
+  <input type="text" id="token" placeholder="Novo Access Token (shpat_...)" />
+  <br />
+  <button onclick="clonar()">CLONAR</button>
 
-    <label for="token">🔑 Access Token:</label>
-    <input type="text" id="token" placeholder="shpat_..." />
-
-    <button onclick="clonarLoja()">🚀 CLONAR</button>
-
-    <div class="result" id="resultado">Pronto pra clonagem!</div>
+  <div id="progress" style="display:none;">
+    ⏳ Clonagem em andamento...
+    <div class="loader"><div class="bar"></div></div>
   </div>
 
-  <footer>
-    SNK HOUSE Clone Engine &copy; 2025
-  </footer>
+  <div id="result"></div>
 
   <script>
-    async function clonarLoja() {
+    async function clonar() {
       const dominio = document.getElementById('dominio').value.trim();
       const token = document.getElementById('token').value.trim();
-      const resultado = document.getElementById('resultado');
+      const resultDiv = document.getElementById('result');
+      const progress = document.getElementById('progress');
 
       if (!dominio || !token) {
-        resultado.innerText = '🚫 Preencha todos os campos, porra!';
+        alert('Preenche os campos, caralho!');
         return;
       }
 
-      resultado.innerText = '⏳ Iniciando clonagem da loja...';
+      resultDiv.innerHTML = '';
+      progress.style.display = 'block';
 
       try {
-        const res = await fetch('/api/clone-loja', {
+        const response = await fetch('/api/clone-loja', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ dominio, token })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ destinoDomain: dominio, destinoToken: token })
         });
 
-        const data = await res.json();
+        const data = await response.json();
+        progress.style.display = 'none';
 
-        if (res.ok) {
-          resultado.innerText = '✅ Loja clonada com sucesso!\n' + JSON.stringify(data, null, 2);
-        } else {
-          resultado.innerText = '❌ Erro na clonagem:\n' + JSON.stringify(data, null, 2);
-        }
-
+        resultDiv.innerHTML = '✅ Clonagem finalizada:\n\n' + JSON.stringify(data.checklist, null, 2);
       } catch (err) {
-        resultado.innerText = '💥 Erro no fetch: ' + err.message;
+        progress.style.display = 'none';
+        resultDiv.innerHTML = '💥 Deu ruim na clonagem: ' + err.message;
       }
     }
   </script>
