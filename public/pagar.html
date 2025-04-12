@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Redirecionando ao Checkout...</title>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('cart_token');
+
+      if (!token) {
+        document.body.innerText = 'Token do carrinho não encontrado!';
+        return;
+      }
+
+      try {
+        const cart = await fetch(`https://602j2f-ig.myshopify.com/cart.js`, {
+          credentials: 'include',
+        }).then(res => res.json());
+
+        const items = cart.items.map(item => ({
+          variantId: String(item.variant_id),
+          price: Number(item.final_line_price),
+          quantity: Number(item.quantity),
+          title: 'SNEAKER SNK HOUSE'
+        }));
+
+        const response = await fetch('https://checkout.snkhouse.com/api/create-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items })
+        });
+
+        const data = await response.json();
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          document.body.innerText = 'Erro ao gerar sessão Stripe.';
+          console.error('❌', data);
+        }
+      } catch (e) {
+        document.body.innerText = 'Erro durante o processo!';
+        console.error('💥', e);
+      }
+    });
+  </script>
+</head>
+<body>
+  <h1>Redirecionando ao checkout seguro...</h1>
+</body>
+</html>
