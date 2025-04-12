@@ -1,6 +1,8 @@
 const axios = require('axios');
 
 module.exports = async function cloneLoja(baseDomain, baseToken, destDomain, destToken) {
+  console.log('Parâmetros recebidos:', { baseDomain, baseToken, destDomain, destToken });
+
   try {
     // Validação dos domínios
     if (!baseDomain || !destDomain) {
