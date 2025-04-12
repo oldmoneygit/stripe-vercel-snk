@@ -27,43 +27,42 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { quantity, price } = req.body;
+    const { items } = req.body;
 
-    // TIRA ESSA PORRA DE EMAIL DAQUI, ANIMAL
-    if (typeof quantity !== 'number' || quantity < 1 || typeof price !== 'number' || isNaN(price)) {
-      return res.status(400).json({ error: 'Missing or invalid quantity or price' });
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Carrinho vazio ou inválido' });
     }
+
+    const line_items = items.map((item) => ({
+      price_data: {
+        currency: 'eur',
+        product_data: {
+          name: item.title || 'Produto Desconhecido',
+        },
+        unit_amount: item.price,
+      },
+      quantity: item.quantity,
+    }));
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'eur',
-            product_data: {
-              name: 'SNEAKER',
-            },
-            unit_amount: price,
-          },
-          quantity,
-        },
-      ],
+      line_items,
       mode: 'payment',
       customer_creation: 'always',
       success_url: 'https://qxxk00-am.myshopify.com/pages/obrigado',
       cancel_url: 'https://qxxk00-am.myshopify.com/pages/erro',
-      // ADICIONA ESSA BOSTA AQUI 👇👇👇👇
       billing_address_collection: 'required',
       shipping_address_collection: {
-      allowed_countries: ['ES'] // Põe os que tu aceita
-  },
-  phone_number_collection: {
-    enabled: true
-  },
-  locale: 'es',
+        allowed_countries: ['ES'],
+      },
+      phone_number_collection: {
+        enabled: true,
+      },
+      locale: 'es',
+      metadata: {
+        items: JSON.stringify(items), // 🔥 Tudo codificado pro webhook ler depois
+      },
     });
-
-    
 
     res.status(200).json({ url: session.url });
   } catch (err) {
