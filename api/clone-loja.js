@@ -1,4 +1,4 @@
-const cloneLoja = require('../utils/cloneLoja');
+const cloneLoja = require('../utils/cloneloja');
 
 module.exports = async (req, res) => {
   try {
