@@ -1,10 +1,11 @@
 import Stripe from 'stripe';
-import getRawBody from 'raw-body'; // ✅ usado pra garantir o req.body funcionando mesmo fora do Next.js/Vercel puro
+import getRawBody from 'raw-body'; // ✅ Garante funcionamento fora do Next puro
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2022-11-15',
 });
 
+// 🔧 Headers CORS
 function setCorsHeaders(res) {
   try {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -15,35 +16,47 @@ function setCorsHeaders(res) {
       'X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization'
     );
   } catch (e) {
-    console.log('💥 Erro ao setar headers CORS:', e);
+    console.error('❌ Falha ao setar CORS headers:', e.message);
   }
 }
 
+// 🧠 Validação básica
+function validarItems(items) {
+  return Array.isArray(items) && items.length > 0 && items.every(item =>
+    item && typeof item === 'object' &&
+    typeof item.price === 'number' &&
+    typeof item.quantity === 'number'
+  );
+}
+
+// 🧨 Handler Principal
 export default async function handler(req, res) {
-  console.log('🔥 INICIOU HANDLER /api/create-checkout');
+  console.log('\n🔥 [API] /api/create-checkout chamada!');
+
   setCorsHeaders(res);
 
   if (req.method === 'OPTIONS') {
-    console.log('🔁 Preflight request OPTIONS respondido.');
+    console.log('🔁 [OPTIONS] CORS liberado.');
     res.status(200).end();
     return;
   }
 
   if (req.method !== 'POST') {
-    console.log(`🚫 Método não permitido: ${req.method}`);
+    console.warn(`❌ [ERRO] Método ${req.method} não permitido.`);
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
   try {
     const raw = await getRawBody(req);
-    const parsedBody = JSON.parse(raw.toString());
+    const body = JSON.parse(raw.toString());
 
-    console.log('📦 Body recebido:', parsedBody);
-    const { items } = parsedBody;
+    console.log('📦 [REQUEST] Body recebido:', body);
 
-    if (!Array.isArray(items) || items.length === 0) {
-      console.log('❌ Carrinho vazio ou inválido:', items);
-      return res.status(400).json({ error: 'Carrinho vazio ou inválido' });
+    const { items } = body;
+
+    if (!validarItems(items)) {
+      console.warn('❌ [ERRO] Carrinho inválido ou vazio:', items);
+      return res.status(400).json({ error: 'Carrinho inválido ou vazio.' });
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -52,7 +65,7 @@ export default async function handler(req, res) {
         price_data: {
           currency: 'eur',
           product_data: {
-            name: 'SNEAKER SNK HOUSE',
+            name: 'SNEAKER SNK HOUSE', // nome blindado
           },
           unit_amount: item.price,
         },
@@ -71,15 +84,15 @@ export default async function handler(req, res) {
       },
       locale: 'es',
       metadata: {
-        items: JSON.stringify(items)
-      }
+        items: JSON.stringify(items),
+      },
     });
 
-    console.log('✅ Sessão Stripe criada com sucesso:', session.url);
+    console.log('✅ [STRIPE] Sessão criada:', session.id);
     res.status(200).json({ url: session.url });
 
   } catch (err) {
-    console.error('💥 Stripe Error:', err.message);
+    console.error('💥 [FATAL] Stripe explodeu:', err.message || err);
     res.status(500).json({ error: err.message || 'Erro interno no servidor' });
   }
 }
