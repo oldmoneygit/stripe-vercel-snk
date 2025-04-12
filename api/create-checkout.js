@@ -27,44 +27,61 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { items } = req.body;
+    const { quantity, price, variantId } = req.body;
 
-    if (!Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: 'Carrinho vazio ou inválido' });
+    if (
+      typeof quantity !== 'number' ||
+      quantity < 1 ||
+      typeof price !== 'number' ||
+      isNaN(price) ||
+      typeof variantId !== 'string'
+    ) {
+      return res.status(400).json({ error: 'Missing or invalid quantity, price or variantId' });
     }
-
-    const line_items = items.map((item) => ({
-      price_data: {
-        currency: 'eur',
-        product_data: {
-          name: item.title || 'Produto Desconhecido',
-        },
-        unit_amount: item.price,
-      },
-      quantity: item.quantity,
-    }));
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      line_items,
+      line_items: [
+        {
+          price_data: {
+            currency: 'eur',
+            product_data: {
+              name: 'SNEAKER SNK HOUSE', // 👟 Camuflagem total, nome fixo genérico
+            },
+            unit_amount: price,
+          },
+          quantity,
+        },
+      ],
       mode: 'payment',
       customer_creation: 'always',
       success_url: 'https://qxxk00-am.myshopify.com/pages/obrigado',
       cancel_url: 'https://qxxk00-am.myshopify.com/pages/erro',
-      billing_address_collection: 'required',
+
+      // ❌ NÃO coleta endereço de cobrança
+      billing_address_collection: 'auto', // auto = deixa em branco, não força
+
+      // ✅ SOMENTE endereço de ENVIO
       shipping_address_collection: {
         allowed_countries: ['ES'],
       },
+
       phone_number_collection: {
         enabled: true,
       },
+
       locale: 'es',
+
+      // Dados que o webhook vai usar pra criar a ordem na Shopify
       metadata: {
-        items: JSON.stringify(items), // 🔥 Tudo codificado pro webhook ler depois
+        variantId,
+        quantity: quantity.toString(),
+        amount: (price * quantity / 100).toFixed(2),
       },
     });
 
     res.status(200).json({ url: session.url });
+
   } catch (err) {
     console.error('❌ Stripe Error:', err);
     res.status(500).json({ error: err.message || 'Internal Server Error' });
