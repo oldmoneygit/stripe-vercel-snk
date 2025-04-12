@@ -2,138 +2,140 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
+  <title>Clonador de Loja - SNK HOUSE</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Clonar Loja Shopify - SNK HOUSE</title>
   <style>
     body {
-      background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f0f0f, #1e1e1e);
+      font-family: 'Segoe UI', sans-serif;
       color: #00ffae;
+      margin: 0;
+      padding: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 30px;
+      justify-content: flex-start;
+      min-height: 100vh;
     }
 
     h1 {
-      background: linear-gradient(to right, #00ffae, #00c0ff);
+      margin-top: 40px;
+      background: linear-gradient(to right, #00ffae, #0075ff);
       background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      font-size: 32px;
-      margin-bottom: 30px;
+      font-size: 28px;
+      text-align: center;
+      animation: glow 2s ease-in-out infinite alternate;
     }
 
-    .container {
-      width: 100%;
-      max-width: 700px;
-      background: #1d1d1d;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 15px #00ffae33;
+    @keyframes glow {
+      from { text-shadow: 0 0 5px #00ffae; }
+      to { text-shadow: 0 0 15px #00ffae; }
     }
 
-    label {
-      display: block;
-      margin-top: 15px;
-      font-weight: bold;
-      font-size: 14px;
-      color: #ccc;
+    .form-container {
+      background-color: #1e1e1e;
+      padding: 30px;
+      margin-top: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0, 255, 174, 0.1);
+      width: 90%;
+      max-width: 600px;
     }
 
     input {
       width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border: none;
-      border-radius: 5px;
-      background: #2c2c2c;
+      padding: 12px;
+      margin-bottom: 15px;
+      background-color: #2a2a2a;
+      border: 1px solid #00ffae30;
       color: #fff;
-      outline: none;
+      border-radius: 6px;
     }
 
     button {
-      margin-top: 25px;
       width: 100%;
-      padding: 15px;
-      background: linear-gradient(to right, #00ffae, #00c0ff);
+      padding: 12px;
+      background: linear-gradient(45deg, #00ffae, #0075ff);
       border: none;
-      border-radius: 5px;
       color: black;
-      font-size: 16px;
       font-weight: bold;
+      border-radius: 6px;
       cursor: pointer;
+      transition: transform 0.2s;
     }
 
-    .log {
-      margin-top: 25px;
-      padding: 15px;
-      background-color: #111;
-      border-left: 5px solid #00ffae;
-      color: #fff;
+    button:hover {
+      transform: scale(1.02);
+    }
+
+    #output {
+      margin-top: 30px;
+      white-space: pre-wrap;
       font-size: 14px;
-      white-space: pre-line;
+      color: #ccc;
+      background: #121212;
+      padding: 15px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 800px;
     }
   </style>
 </head>
 <body>
-  <h1>🔁 Clonar Loja Shopify</h1>
-  <div class="container">
-    <label for="origemDomain">🌐 Domínio da Loja Origem</label>
-    <input type="text" id="origemDomain" placeholder="ex: loja1.myshopify.com"/>
+  <h1>🔁 Clonador de Loja - SNK HOUSE</h1>
 
-    <label for="origemToken">🔑 Access Token da Origem</label>
-    <input type="text" id="origemToken" placeholder="ex: shpat_abc..."/>
-
-    <label for="destinoDomain">🌐 Domínio da Loja Destino</label>
-    <input type="text" id="destinoDomain" placeholder="ex: loja2.myshopify.com"/>
-
-    <label for="destinoToken">🔑 Access Token da Destino</label>
-    <input type="text" id="destinoToken" placeholder="ex: shpat_xyz..."/>
-
-    <button onclick="clonar()">🔥 CLONAR AGORA</button>
-
-    <div class="log" id="log">Aguardando entrada...</div>
+  <div class="form-container">
+    <input type="text" id="baseDomain" placeholder="Domínio da loja base (ex: loja1.myshopify.com)">
+    <input type="text" id="baseToken" placeholder="Access Token da loja base">
+    <input type="text" id="destDomain" placeholder="Domínio da loja destino">
+    <input type="text" id="destToken" placeholder="Access Token da loja destino">
+    <button onclick="startClone()">CLONAR</button>
   </div>
 
-  <script>
-    async function clonar() {
-      const origemDomain = document.getElementById('origemDomain').value.trim();
-      const origemToken = document.getElementById('origemToken').value.trim();
-      const destinoDomain = document.getElementById('destinoDomain').value.trim();
-      const destinoToken = document.getElementById('destinoToken').value.trim();
-      const logBox = document.getElementById('log');
+  <div id="output">Aguardando início...</div>
 
-      if (!origemDomain || !origemToken || !destinoDomain || !destinoToken) {
-        logBox.textContent = "⚠️ Preencha todos os campos!";
+  <script>
+    const output = document.getElementById('output');
+
+    async function startClone() {
+      const baseDomain = document.getElementById('baseDomain').value.trim();
+      const baseToken = document.getElementById('baseToken').value.trim();
+      const destDomain = document.getElementById('destDomain').value.trim();
+      const destToken = document.getElementById('destToken').value.trim();
+
+      if (!baseDomain || !baseToken || !destDomain || !destToken) {
+        output.textContent = '⚠️ Preencha todos os campos corretamente.';
         return;
       }
 
-      logBox.textContent = "⏳ Iniciando clonagem...";
+      output.textContent = '⏳ Enviando dados para clonar...\n';
 
       try {
         const res = await fetch('/api/clone-loja', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            origem: { domain: origemDomain, token: origemToken },
-            destino: { domain: destinoDomain, token: destinoToken }
+            baseDomain,
+            baseToken,
+            destDomain,
+            destToken
           })
         });
 
         const data = await res.json();
 
-        if (data.success) {
-          logBox.textContent = "✅ Clonagem finalizada com sucesso!\n\n" + data.relatorio;
+        if (res.ok) {
+          output.textContent += '✅ Clonagem finalizada!\n\n';
+          Object.entries(data).forEach(([key, value]) => {
+            output.textContent += `✅ ${key.toUpperCase()}: ${value.total || 0} itens clonados\n`;
+          });
         } else {
-          logBox.textContent = "❌ Erro na clonagem:\n" + (data.message || 'Erro desconhecido');
+          output.textContent += `❌ Erro: ${data.error || 'Erro inesperado'}`;
         }
-
       } catch (err) {
-        logBox.textContent = "💥 Falha geral: " + err.message;
-        console.error(err);
+        output.textContent += '💥 Erro ao clonar loja: ' + err.message;
       }
     }
   </script>
