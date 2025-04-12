@@ -8,12 +8,10 @@ module.exports.config = {
 };
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
-const SHOPIFY_ENDPOINT = 'https://stripe-serverless-vercel.onrender.com/api/shopify-order'; // 🧠 direto, sem depender de env
+const SHOPIFY_ORDER_ENDPOINT = `${process.env.BASE_URL}/api/shopify-order`; // 🔥 isso vai bater direto na tua API REST
 
 module.exports = async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).send('Método não permitido, porra!');
-  }
+  if (req.method !== 'POST') return res.writeHead(405).end('Método não permitido');
 
   const sig = req.headers['stripe-signature'];
 
@@ -23,61 +21,54 @@ module.exports = async function handler(req, res) {
     event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     console.error('❌ Webhook inválido:', err.message);
-    return res.status(400).send(`Webhook inválido: ${err.message}`);
+    return res.writeHead(400).end(`Webhook inválido: ${err.message}`);
   }
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
 
     if (session.payment_status === 'paid') {
-      const customer = session.customer_details;
-
       let items = [];
       try {
         items = JSON.parse(session.metadata.items);
       } catch (err) {
-        console.error('❌ Falha ao parsear metadata.items:', err);
-        return res.status(400).send('Metadata.items inválido');
+        console.error('❌ Metadata zoada:', err.message);
+        return res.writeHead(400).end('Metadata.items inválido');
       }
 
-      const line_items = items.map(item => ({
-        variant_id: Number(item.variantId),
-        quantity: Number(item.quantity),
-      }));
+      const customer = session.customer_details;
+      const address = customer.address;
 
       const [first_name, ...rest] = customer.name.split(' ');
-      const shipping_address = {
-        first_name,
-        last_name: rest.join(' ') || '',
-        address1: customer.address.line1,
-        address2: customer.address.line2 || '',
-        city: customer.address.city,
-        province: customer.address.state,
-        country: customer.address.country,
-        zip: customer.address.postal_code
-      };
-
-      const amount = items.reduce((acc, item) => {
-        return acc + (item.price * item.quantity);
-      }, 0) / 100;
 
       const payload = {
         email: customer.email,
-        line_items,
-        amount,
-        shipping_address
+        line_items: items.map(item => ({
+          variant_id: Number(item.variantId),
+          quantity: Number(item.quantity),
+        })),
+        amount: items.reduce((acc, item) => acc + (item.price * item.quantity), 0) / 100,
+        shipping_address: {
+          first_name,
+          last_name: rest.join(' ') || '',
+          address1: address.line1,
+          address2: address.line2 || '',
+          city: address.city,
+          province: address.state,
+          country: address.country,
+          zip: address.postal_code
+        }
       };
 
+      // 🚀 Cria o pedido na Shopify automático
       try {
-        const response = await axios.post(SHOPIFY_ENDPOINT, payload);
-        console.log('🔥 Ordem criada na Shopify:', response.data);
+        const result = await axios.post(SHOPIFY_ORDER_ENDPOINT, payload);
+        console.log('✅ Pedido criado na Shopify:', result.data);
       } catch (err) {
-        console.error('💥 Erro criando ordem na Shopify:', err.response?.data || err.message);
+        console.error('💥 ERRO CRIANDO ORDEM:', err.response?.data || err.message);
       }
     }
   }
 
-  res.writeHead(200);
-res.end('Webhook processado com sucesso!');
-
+  res.writeHead(200).end('Webhook processado com sucesso');
 };
