@@ -1,1 +1,1 @@
-const URL_LOJA = "https://qxxk00-am.myshopify.com";
+const URL_LOJA = "https://602j2f-ig.myshopify.com";
