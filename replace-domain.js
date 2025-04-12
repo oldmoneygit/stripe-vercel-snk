@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 
 // CONFIGURA AQUI: DOMÍNIO ANTIGO E NOVO
-const OLD_DOMAIN = '602j2f-ig.myshopify.com';
-const NEW_DOMAIN = '602j2f-ig.myshopify.com';
+const OLD_DOMAIN = 'checkout.snkhouse.com';
+const NEW_DOMAIN = 'checkout.snkhouse.com';
 
 // TIPOS DE ARQUIVOS QUE SERÃO ANALISADOS
 const VALID_EXTENSIONS = ['.js', '.json', '.html', '.txt'];
