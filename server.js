@@ -1,47 +1,44 @@
 const http = require('http');
-const path = require('path');
-const finalhandler = require('finalhandler');
 const { router, get, post } = require('microrouter');
+const fs = require('fs');
+const path = require('path');
 const serveStatic = require('serve-static');
+const finalhandler = require('finalhandler');
 
-// Importa os handlers
+// HANDLERS
 const stripeWebhook = require('./api/stripe-webhook');
 const shopifyOrder = require('./api/shopify-order');
 const shopifyOrderGraphQL = require('./api/shopify-order-graphql');
 const shopifyOrderPaid = require('./api/shopify-order-paid');
 const logPedido = require('./api/log-pedido');
+const cloneLoja = require('./api/clone-loja');
 
-// Normaliza export default
+// FUNÇÃO PRA NORMALIZAR EXPORT DEFAULT
 const normalize = (handler) => (typeof handler === 'function' ? handler : handler.default || handler.handler);
 
-// Middleware pra servir HTML, CSS, JS e imagens da pasta /public
-const staticMiddleware = serveStatic(path.join(__dirname, 'public'));
+// SERVE STATIC FILES DA /public
+const publicPath = path.join(__dirname, 'public');
+const serve = serveStatic(publicPath);
 
-// Criação do servidor com rotas + arquivos públicos
+// ROTEAMENTO PRINCIPAL
 const server = http.createServer((req, res) => {
-  // Primeiro tenta rodar as rotas da API
-  const match = router(
-    // APIs
-    post('/api/stripe-webhook', normalize(stripeWebhook)),
-    post('/api/shopify-order', normalize(shopifyOrder)),
-    post('/api/shopify-order-graphql', normalize(shopifyOrderGraphQL)),
-    post('/api/shopify-order-paid', normalize(shopifyOrderPaid)),
-    post('/api/log-pedido', normalize(logPedido)),
-    get('/api/log-pedido', normalize(logPedido)),
-
-    // Rota raiz
-    get('/', (req, res) => {
-      res.end('Lek do Black rodando, caralho!');
-    })
-  )(req, res);
-
-  // Se nenhuma rota da API bateu, tenta servir um arquivo estático
-  if (!match) staticMiddleware(req, res, finalhandler(req, res));
+  // primeiro tenta servir arquivos estáticos
+  serve(req, res, () => {
+    router(
+      post('/api/stripe-webhook', normalize(stripeWebhook)),
+      post('/api/shopify-order', normalize(shopifyOrder)),
+      post('/api/shopify-order-graphql', normalize(shopifyOrderGraphQL)),
+      post('/api/shopify-order-paid', normalize(shopifyOrderPaid)),
+      post('/api/log-pedido', normalize(logPedido)),
+      get('/api/log-pedido', normalize(logPedido)),
+      post('/api/clone-loja', normalize(cloneLoja)),
+      get('/', (req, res) => res.end('Lek do Black rodando, caralho!'))
+    )(req, res, finalhandler(req, res));
+  });
 });
 
-// Porta configurável
+// PORTA
 const PORT = process.env.PORT || 3000;
-
 server.listen(PORT, () => {
   console.log(`🔥 Servidor rodando na porta ${PORT}`);
 });
