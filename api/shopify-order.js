@@ -8,6 +8,9 @@ export default async function handler(req, res) {
   try {
     const { email, line_items, amount, shipping_address } = req.body;
 
+    if (!email || !Array.isArray(line_items) || line_items.length === 0) {
+      return res.status(400).json({ error: 'Dados incompletos pra criar a porra da ordem' });
+    }
 
     const SHOPIFY_STORE = 'https://qxxk00-am.myshopify.com';
     const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
@@ -15,7 +18,7 @@ export default async function handler(req, res) {
     const orderData = {
       order: {
         email,
-        shipping_address: shipping_address,
+        shipping_address,
         financial_status: 'paid',
         send_receipt: true,
         send_fulfillment_receipt: true,
@@ -24,7 +27,7 @@ export default async function handler(req, res) {
           {
             kind: 'sale',
             status: 'success',
-            amount
+            amount: parseFloat(amount)
           }
         ]
       }
@@ -41,10 +44,16 @@ export default async function handler(req, res) {
       }
     );
 
+    console.log('✅ Shopify respondeu:', response.data);
     return res.status(200).json({ message: 'Ordem criada com sucesso!', data: response.data });
 
   } catch (error) {
-    console.error('❌ Erro ao criar ordem:', error.response?.data || error.message);
-    return res.status(500).json({ error: 'Erro ao criar ordem', details: error.response?.data || error.message });
+    const errData = error.response?.data || error.message;
+    console.error('❌ Erro ao criar ordem:', errData);
+
+    return res.status(500).json({
+      error: 'Erro ao criar ordem na Shopify',
+      details: errData
+    });
   }
 }
