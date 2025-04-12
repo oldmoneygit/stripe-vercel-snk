@@ -30,9 +30,9 @@ export default async function handler(req, res) {
     const session = event.data.object;
 
     if (session.payment_status === 'paid') {
-      const email = session.customer_details.email;
-      let items = [];
+      const customer = session.customer_details;
 
+      let items = [];
       try {
         items = JSON.parse(session.metadata.items);
       } catch (err) {
@@ -40,41 +40,34 @@ export default async function handler(req, res) {
         return res.status(400).send('Metadata.items inválido');
       }
 
-      // Monta os line_items pro Shopify
       const line_items = items.map(item => ({
         variant_id: Number(item.variantId),
         quantity: Number(item.quantity),
       }));
 
-      const shipping = session.shipping_details;
+      const [first_name, ...rest] = customer.name.split(' ');
       const shipping_address = {
-        first_name: shipping.name.split(' ')[0],
-        last_name: shipping.name.split(' ').slice(1).join(' ') || '',
-        address1: shipping.address.line1,
-        address2: shipping.address.line2 || '',
-        city: shipping.address.city,
-        province: shipping.address.state,
-        country: shipping.address.country,
-        zip: shipping.address.postal_code
+        first_name,
+        last_name: rest.join(' ') || '',
+        address1: customer.address.line1,
+        address2: customer.address.line2 || '',
+        city: customer.address.city,
+        province: customer.address.state,
+        country: customer.address.country,
+        zip: customer.address.postal_code
       };
-      
 
-      // Soma total da fatura (convertendo de centavos pra decimal)
       const amount = items.reduce((acc, item) => {
         return acc + (item.price * item.quantity);
       }, 0) / 100;
 
-      // Prepara payload da ordem Shopify
       const payload = {
-        email,
+        email: customer.email,
         line_items,
         amount,
         shipping_address
-        
       };
-      
 
-      // Bate no endpoint que cria ordem
       try {
         const response = await axios.post(SHOPIFY_ENDPOINT, payload);
         console.log('🔥 Ordem criada na Shopify:', response.data);
