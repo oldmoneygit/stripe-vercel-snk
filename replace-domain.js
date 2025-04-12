@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-// CONFIGURA AQUI: DOMÍNIO ANTIGO E NOVO
+// CONFIGURA AQUI: DOMÍNIO ANTIGO E NOVO // RODA ESSE PROMPT NA RAIZ DO PROJETO NO TERMINAL  : node replace-domain.js
 const OLD_DOMAIN = '602j2f-ig.myshopify.com';
 const NEW_DOMAIN = '602j2f-ig.myshopify.com';
 
