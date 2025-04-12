@@ -123,16 +123,26 @@
       const res = await fetch('/api/log-pedido');
       const data = await res.json();
 
-      // Preencher logs no HTML
+      // LIMPA ANTIGO
       logContainer.innerHTML = '';
-      data.slice().reverse().forEach(log => {
+
+      // SE TIVER VAZIO, MOSTRA MENSAGEM
+      if (data.length === 0) {
         const div = document.createElement('div');
         div.className = 'log';
-        div.textContent = `[${log.date || '???'}] ${log.email || 'sem e-mail'} - ${log.amount || 0}€ - ${log?.address?.city || '??'}`;
+        div.textContent = '🚫 Nenhum pedido registrado ainda.';
         logContainer.appendChild(div);
-      });
+      } else {
+        // LISTA OS PEDIDOS
+        data.slice().reverse().forEach(log => {
+          const div = document.createElement('div');
+          div.className = 'log';
+          div.textContent = `[${log.date || '???'}] ${log.email || 'sem e-mail'} - ${log.amount || 0}€ - ${log?.address?.city || '??'}`;
+          logContainer.appendChild(div);
+        });
+      }
 
-      // Atualiza gráfico
+      // ATUALIZA O GRÁFICO
       const last5 = data.slice(-10);
       chartData.labels = last5.map((l, i) => l.email?.split('@')[0] || `#${i}`);
       chartData.datasets[0].data = last5.map(l => l.amount || 0);
