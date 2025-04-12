@@ -71,4 +71,7 @@ module.exports = async function handler(req, res) {
   }
 
   res.writeHead(200).end('Webhook processado com sucesso');
+
+  await axios.post(`${process.env.BASE_URL}/api/log-pedido`, payload);
+
 };
