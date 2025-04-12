@@ -1,7 +1,5 @@
-# Nunca comita esses putos
-.env*
-*.local
-*.secret
-*.key
-# Arquivos de configuração
 .env
+node_modules/
+.cache/
+.next/
+.DS_Store
