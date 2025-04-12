@@ -1,7 +1,6 @@
-
 const axios = require('axios');
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Método não permitido, caralho!' });
   }
@@ -57,4 +56,4 @@ export default async function handler(req, res) {
       details: errData
     });
   }
-}
+};

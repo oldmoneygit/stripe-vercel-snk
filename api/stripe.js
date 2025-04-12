@@ -1,24 +1,25 @@
-import Stripe from 'stripe';
+const Stripe = require('stripe');
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: '2022-11-15',
+});
 
-export const config = {
+// ⚙️ Render exige isso pra funcionar sem o bodyParser do Next ou Express
+module.exports.config = {
   api: {
     bodyParser: false,
   },
 };
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2022-11-15',
-});
-
+// Função que transforma stream (req) em buffer, compatível com stripe.webhooks
 const buffer = async (readable) => {
   const chunks = [];
   for await (const chunk of readable) {
-    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
   }
   return Buffer.concat(chunks);
 };
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   console.log("🔥 Recebido requisição Stripe");
 
   if (req.method !== 'POST') {
@@ -38,6 +39,7 @@ export default async function handler(req, res) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
+  // Se o evento for o que nos interessa
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     console.log("✅ Pagamento confirmado:", session.customer_email, session.amount_total);
@@ -45,6 +47,8 @@ export default async function handler(req, res) {
     console.log("ℹ️ Outro evento recebido:", event.type);
   }
 
-  await new Promise(resolve => setTimeout(resolve, 2000)); // força log na Vercel
+  // Delay só pra garantir que os logs vão aparecer no painel do Render
+  await new Promise(resolve => setTimeout(resolve, 2000));
+
   res.status(200).json({ received: true });
-}
+};

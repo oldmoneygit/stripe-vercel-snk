@@ -1,16 +1,16 @@
 const { buffer } = require('micro');
 const axios = require('axios');
 
-export const config = {
+module.exports.config = {
   api: {
     bodyParser: false,
   },
 };
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
-const SHOPIFY_ENDPOINT = `${process.env.BASE_URL}/api/shopify-order`;
+const SHOPIFY_ENDPOINT = 'https://stripe-serverless-vercel.onrender.com/api/shopify-order'; // 🧠 direto, sem depender de env
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).send('Método não permitido, porra!');
   }
@@ -78,4 +78,4 @@ export default async function handler(req, res) {
   }
 
   res.status(200).send('Webhook processado com sucesso!');
-}
+};

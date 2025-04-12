@@ -1,17 +1,18 @@
-import Stripe from 'stripe';
-import { buffer } from 'micro';
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+const { buffer } = require('micro');
+const Stripe = require('stripe');
+const axios = require('axios');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2022-11-15',
 });
 
-export default async function handler(req, res) {
+module.exports.config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).end('Method Not Allowed');
   }
@@ -20,11 +21,10 @@ export default async function handler(req, res) {
   const sig = req.headers['stripe-signature'];
 
   let event;
-
   try {
     event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
-    console.error('⚠️ Webhook signature verification failed.', err.message);
+    console.error('❌ Webhook inválido:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
   }
 
   res.status(200).json({ received: true });
-}
+};
 
 async function criarPedidoNaShopify(session) {
   const SHOPIFY_DOMAIN = process.env.SHOPIFY_DOMAIN;
@@ -45,7 +45,28 @@ async function criarPedidoNaShopify(session) {
   const customer = session.customer_details;
   const address = customer.address;
 
-  const body = {
+  // 🔥 Aqui a mágica: puxar o carrinho real
+  let items = [];
+  try {
+    items = JSON.parse(session.metadata.items);
+  } catch (e) {
+    console.warn('⚠️ Metadata.items ausente ou inválido:', e.message);
+  }
+
+  const line_items = items.length > 0
+    ? items.map(item => ({
+        variant_id: Number(item.variantId),
+        quantity: Number(item.quantity)
+      }))
+    : [
+        {
+          title: 'SNEAKER',
+          quantity: 1,
+          price: session.amount_total / 100
+        }
+      ];
+
+  const orderData = {
     order: {
       email: customer.email,
       financial_status: 'paid',
@@ -79,25 +100,24 @@ async function criarPedidoNaShopify(session) {
         zip: address.postal_code || '',
         phone: customer.phone || '',
       },
-      line_items: [
-        {
-          title: 'SNEAKER',
-          quantity: 1,
-          price: session.amount_total / 100,
-        },
-      ]
+      line_items
     }
   };
 
-  const response = await fetch(`https://${SHOPIFY_DOMAIN}/admin/api/2023-10/orders.json`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Shopify-Access-Token': SHOPIFY_ADMIN_TOKEN,
-    },
-    body: JSON.stringify(body)
-  });
+  try {
+    const response = await axios.post(
+      `https://${SHOPIFY_DOMAIN}/admin/api/2023-10/orders.json`,
+      orderData,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Shopify-Access-Token': SHOPIFY_ADMIN_TOKEN,
+        }
+      }
+    );
 
-  const data = await response.json();
-  console.log('🧾 Pedido criado na Shopify:', JSON.stringify(data, null, 2));
+    console.log('🧾 Pedido criado na Shopify:', JSON.stringify(response.data, null, 2));
+  } catch (error) {
+    console.error('❌ ERRO AO CRIAR PEDIDO:', error.response?.data || error.message);
+  }
 }

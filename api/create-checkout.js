@@ -27,55 +27,41 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { quantity, price, variantId } = req.body;
+    const { items } = req.body;
 
-    if (
-      typeof quantity !== 'number' ||
-      quantity < 1 ||
-      typeof price !== 'number' ||
-      isNaN(price) ||
-      typeof variantId !== 'string'
-    ) {
-      return res.status(400).json({ error: 'Missing or invalid quantity, price or variantId' });
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Carrinho vazio ou inválido' });
     }
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'eur',
-            product_data: {
-              name: 'SNEAKER SNK HOUSE', // 👟 Camuflagem total, nome fixo genérico
-            },
-            unit_amount: item.price,
+      line_items: items.map(item => ({
+        price_data: {
+          currency: 'eur',
+          product_data: {
+            name: 'SNEAKER SNK HOUSE', // 🔥 Camuflado fixo
           },
-          quantity: item.quantity,
+          unit_amount: item.price,
         },
-      ],
+        quantity: item.quantity,
+      })),
       mode: 'payment',
       customer_creation: 'always',
       success_url: 'https://qxxk00-am.myshopify.com/pages/obrigado',
       cancel_url: 'https://qxxk00-am.myshopify.com/pages/erro',
-
-      // ❌ NÃO coleta endereço de cobrança
-      billing_address_collection: 'auto', // auto = deixa em branco, não força
-
-      // ✅ SOMENTE endereço de ENVIO
+      billing_address_collection: 'auto',
       shipping_address_collection: {
         allowed_countries: ['ES'],
       },
-
       phone_number_collection: {
         enabled: true,
       },
-
       locale: 'es',
 
-      // Dados que o webhook vai usar pra criar a ordem na Shopify
+      // Metadata pros nossos webhooks cabulosos
       metadata: {
-        items: JSON.stringify(items),
-      },
+        items: JSON.stringify(items)
+      }
     });
 
     res.status(200).json({ url: session.url });
