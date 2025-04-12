@@ -37,15 +37,30 @@
         return;
       }
 
+      // Simular itens do carrinho para teste
+      const items = [
+        { price: 7999, quantity: 2, title: 'Nike SB Dunk Low Strange Love Skateboards' }
+      ];
+
+      // Calcular o total e formatar os valores
+      const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const formattedTotalPrice = new Intl.NumberFormat('es-ES', {
+        style: 'currency',
+        currency: 'EUR',
+      }).format(totalPrice / 100); // Dividir por 100 para converter de centavos para euros
+
+      const formattedUnitPrice = new Intl.NumberFormat('es-ES', {
+        style: 'currency',
+        currency: 'EUR',
+      }).format(items[0].price / 100); // Dividir por 100 para converter de centavos para euros
+
+      // Atualizar o texto do botão
+      checkoutBtn.textContent = `Pagar ${formattedTotalPrice} (${items[0].quantity} x ${formattedUnitPrice} unidad)`;
+
       checkoutBtn.addEventListener('click', async () => {
         console.log('👊 Clique detectado. Iniciando processo...');
 
         try {
-          // Simular itens do carrinho para teste
-          const items = [
-            { price: 7999, quantity: 2, title: 'Nike SB Dunk Low Strange Love Skateboards' }
-          ];
-
           console.log('🚀 Enviando itens para a API do backend Stripe:', items);
 
           // Enviar os itens para a API do backend
