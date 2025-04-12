@@ -77,5 +77,7 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  res.status(200).send('Webhook processado com sucesso!');
+  res.writeHead(200);
+res.end('Webhook processado com sucesso!');
+
 };
