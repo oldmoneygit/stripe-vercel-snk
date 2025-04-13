@@ -1,83 +1,71 @@
 const Stripe = require('stripe');
 const getRawBody = require('raw-body');
+const axios = require('axios');
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2022-11-15',
-});
-
-// Liberar geral para Shopify (pode depois colocar o domínio específico se quiser)
-function setCorsHeaders(res) {
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', 'https://602j2f-ig.myshopify.com');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Content-Type, Authorization'
-  );
-}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 module.exports = async function handler(req, res) {
-  setCorsHeaders(res);
+  const sig = req.headers['stripe-signature'];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-  if (req.method === 'OPTIONS') {
-    // Preflight CORS check da Shopify
-    res.statusCode = 200;
-    return res.end();
-  }
-
-  if (req.method !== 'POST') {
-    res.statusCode = 405;
-    return res.end(JSON.stringify({ message: 'Method Not Allowed' }));
-  }
-
+  let event;
   try {
     const raw = await getRawBody(req);
-    const { items } = JSON.parse(raw.toString());
-
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      res.statusCode = 400;
-      return res.end(JSON.stringify({ error: 'Carrinho vazio ou inválido' }));
-    }
-
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: items.map(item => ({
-        price_data: {
-          currency: 'eur',
-          product_data: {
-            name: item.title || 'SNK HOUSE',
-          },
-          unit_amount: item.price,
-        },
-        quantity: item.quantity,
-      })),
-      mode: 'payment',
-      customer_creation: 'always',
-      success_url: 'https://602j2f-ig.myshopify.com/pages/obrigado',
-      cancel_url: 'https://602j2f-ig.myshopify.com/pages/erro',
-      billing_address_collection: 'auto',
-      shipping_address_collection: {
-        allowed_countries: ['ES'],
-      },
-      phone_number_collection: {
-        enabled: true,
-      },
-      locale: 'es',
-      metadata: {
-        items: JSON.stringify(items.map(({ variantId, quantity }) => ({
-          variantId, quantity
-        }))),
-      },
-    });
-
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    return res.end(JSON.stringify({ url: session.url }));
-
+    event = stripe.webhooks.constructEvent(raw, sig, endpointSecret);
   } catch (err) {
-    console.error('💥 Stripe Error:', err.message);
-    res.statusCode = 500;
-    res.setHeader('Content-Type', 'application/json');
-    return res.end(JSON.stringify({ error: err.message || 'Erro interno no servidor' }));
+    console.error('💀 Erro na verificação do webhook:', err.message);
+    res.statusCode = 400;
+    return res.end(`Webhook Error: ${err.message}`);
   }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const items = JSON.parse(session.metadata.items || '[]');
+
+    console.log('✅ Webhook Stripe processado com sucesso!');
+    console.log('🧠 ITEMS:', items);
+
+    // Montar pedido Shopify
+    try {
+      const orderData = {
+        order: {
+          line_items: items.map(item => ({
+            variant_id: item.variantId,
+            quantity: item.quantity
+          })),
+          email: session.customer_details.email,
+          phone: session.customer_details.phone,
+          shipping_address: {
+            first_name: session.customer_details.name.split(' ')[0],
+            last_name: session.customer_details.name.split(' ').slice(1).join(' '),
+            address1: session.customer_details.address.line1,
+            city: session.customer_details.address.city,
+            province: session.customer_details.address.state,
+            country: 'Spain',
+            zip: session.customer_details.address.postal_code,
+            phone: session.customer_details.phone,
+          },
+          financial_status: 'paid'
+        }
+      };
+
+      const response = await axios.post(
+        `https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/api/2023-10/orders.json`,
+        orderData,
+        {
+          headers: {
+            'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN,
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+
+      console.log('🔥 Pedido criado na Shopify!', response.data);
+    } catch (err) {
+      console.error('❌ Erro ao criar pedido na Shopify:', err.response?.data || err.message);
+    }
+  }
+
+  res.statusCode = 200;
+  res.end('Webhook recebido!');
 };
