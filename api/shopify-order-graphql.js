@@ -15,26 +15,35 @@ module.exports = async function handler(req, res) {
   try {
     parsed = JSON.parse(body);
   } catch (err) {
+    console.error('❌ JSON inválido:', err);
     res.writeHead(400).end('JSON do corpo tá uma merda!');
     return;
   }
 
-  const { email, first_name, last_name, address1, city, zip, country, line_items } = parsed;
+  const {
+    email,
+    first_name,
+    last_name,
+    address1,
+    city,
+    zip,
+    country,
+    line_items,
+  } = parsed;
 
-  if (!email || !line_items || !Array.isArray(line_items)) {
-    res.writeHead(400).end('Dados obrigatórios faltando, porra!');
+  if (!email || !line_items || !Array.isArray(line_items) || line_items.length === 0) {
+    res.writeHead(400).end('Faltando dados obrigatórios, seu animal!');
     return;
   }
 
-  const shopifyDomain = process.env.SHOPIFY_DOMAIN; // ex: 602j2f-ig.myshopify.com
+  const shopifyDomain = process.env.SHOPIFY_DOMAIN;
   const shopifyToken = process.env.SHOPIFY_ADMIN_TOKEN;
 
-  // Formata os line_items como GraphQL input
   const lineItemsGQL = line_items.map(item => {
     return `{ variantId: "${item.variant_id}", quantity: ${item.quantity} }`;
   }).join(', ');
 
-  const query = `
+  const mutation = `
     mutation {
       draftOrderCreate(input: {
         email: "${email}",
@@ -61,11 +70,11 @@ module.exports = async function handler(req, res) {
     }
   `;
 
-  const payload = JSON.stringify({ query });
+  const payload = JSON.stringify({ query: mutation });
 
   const options = {
     hostname: shopifyDomain,
-    path: '/admin/api/2025-04/graphql.json',
+    path: '/admin/api/2024-04/graphql.json',
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -76,17 +85,17 @@ module.exports = async function handler(req, res) {
 
   const request = https.request(options, (response) => {
     let data = '';
-    response.on('data', (chunk) => { data += chunk; });
+    response.on('data', chunk => data += chunk);
     response.on('end', () => {
-      console.log('🔥 Shopify GraphQL response:', data);
+      console.log('🔥 Shopify respondeu:', data);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(data);
     });
   });
 
   request.on('error', (err) => {
-    console.error('💥 ERRO NA REQ SHOPIFY:', err);
-    res.writeHead(500).end('Erro na requisição pra Shopify!');
+    console.error('💥 ERRO AO ENVIAR PRA SHOPIFY:', err);
+    res.writeHead(500).end('Erro ao conectar com Shopify, porra!');
   });
 
   request.write(payload);
